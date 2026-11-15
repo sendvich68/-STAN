@@ -1,0 +1,16 @@
+[package]
+name = "trivoga_bpla_stan"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+macroquad = "0.4"
+
+[package.metadata.android]
+package = "app.stan.trivogabpla"
+label = "Тривога БПЛА STAN"
+assets = "assets"
+
+[package.metadata.android.sdk]
+min_sdk_version = 26
+target_sdk_version = 35
