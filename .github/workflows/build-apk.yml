@@ -18,12 +18,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Rust
+      - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: aarch64-linux-android
 
-      - name: Setup Java
+      - name: Install Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -31,18 +31,39 @@ jobs:
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
-        with:
-          packages: |
-            platform-tools
-            platforms;android-35
-            build-tools;35.0.0
-            cmdline-tools;latest
 
-      - name: Setup Android NDK
+      - name: Accept SDK terms
+        shell: bash
+        run: |
+          set +o pipefail
+          yes | sdkmanager --licenses
+          set -o pipefail
+
+      - name: Install SDK packages
+        run: |
+          sdkmanager \
+            "platform-tools" \
+            "platforms;android-35" \
+            "build-tools;35.0.0"
+
+      - name: Setup NDK
         uses: nttld/setup-ndk@v1
         with:
           ndk-version: r27c
           add-to-path: true
+
+      - name: Prepare map and font
+        run: |
+          mkdir -p assets
+          curl -fL \
+            https://raw.githubusercontent.com/wmgeolab/geoBoundaries/main/releaseData/gbOpen/UKR/ADM1/geoBoundaries-UKR-ADM1.geojson \
+            -o assets/regions.geojson
+
+          sudo apt-get update
+          sudo apt-get install -y fonts-dejavu-core
+
+          cp /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf \
+            assets/DejaVuSans.ttf
 
       - name: Install cargo-apk
         run: cargo install cargo-apk --locked
@@ -54,5 +75,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Trivoga-BPLA-STAN
-          path: target/**/release/apk/*.apk
+          path: target/**/*.apk
           if-no-files-found: error
+          retention-days: 14
