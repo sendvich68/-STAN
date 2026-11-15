@@ -1,3 +1,4 @@
+
 name: Build Android APK
 
 on:
@@ -72,7 +73,3 @@ jobs:
           path: target/android-artifacts/release/apk/*.apk
           if-no-files-found: error
           retention-days: 14
-
-[package.metadata.android]
-assets = "assets/"
-build_targets = ["aarch64-linux-android"]
