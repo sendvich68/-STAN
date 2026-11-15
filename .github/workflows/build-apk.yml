@@ -1,5 +1,5 @@
 
-name: Build Android APK
+name: Build Trivoga BPLA STAN
 
 on:
   workflow_dispatch:
@@ -24,6 +24,8 @@ jobs:
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -37,12 +39,26 @@ jobs:
           ndk-version: r27c
           add-to-path: true
 
-      - name: Configure NDK
+      - name: Install Android platform 29
         run: |
-          echo "NDK_HOME=$ANDROID_NDK_HOME" >> "$GITHUB_ENV"
+          SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
 
-      - name: Install Macroquad APK builder
-        run: cargo install cargo-quad-apk
+          if [ ! -f "$SDKMANAGER" ]; then
+            SDKMANAGER=$(find "$ANDROID_HOME/cmdline-tools" \
+              -name sdkmanager -type f | head -n 1)
+          fi
+
+          if [ -z "$SDKMANAGER" ]; then
+            echo "sdkmanager not found"
+            exit 1
+          fi
+
+          yes | "$SDKMANAGER" --licenses || true
+
+          "$SDKMANAGER" "platforms;android-29"
+
+      - name: Install cargo-quad-apk
+        run: cargo install cargo-quad-apk --locked
 
       - name: Prepare assets
         run: |
