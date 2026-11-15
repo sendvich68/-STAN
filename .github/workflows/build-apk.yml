@@ -16,7 +16,6 @@ jobs:
 
     env:
       ANDROID_HOME: /usr/local/lib/android/sdk
-      ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
 
     steps:
       - name: Checkout
@@ -39,17 +38,36 @@ jobs:
           ndk-version: r27c
           add-to-path: true
 
-      - name: Install dependencies
+      - name: Install cargo-apk
         run: cargo install cargo-apk --locked
 
-      - name: Prepare assets
+      - name: Prepare map
         run: |
-          mkdir -p assets
-          curl -fL "https://raw.githubusercontent.com/wmgeolab/geoBoundaries/main/releaseData/gbOpen/UKR/ADM1/geoBoundaries-UKR-ADM1.geojson" \
+          mkdir -p assets/photos
+
+          curl -fL \
+            "https://raw.githubusercontent.com/wmgeolab/geoBoundaries/main/releaseData/gbOpen/UKR/ADM1/geoBoundaries-UKR-ADM1.geojson" \
             -o assets/regions.geojson
 
+      - name: Prepare font
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y fonts-dejavu-core
+
+          cp /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf \
+            assets/DejaVuSans.ttf
+
+      - name: Rename drone image if present
+        run: |
+          if [ -f "assets/photos/беспилотник.png" ]; then
+            mv "assets/photos/беспилотник.png" \
+               "assets/photos/drone.png"
+          fi
+
       - name: Build APK
-        run: cargo apk build --release --target aarch64-linux-android
+        run: |
+          cargo apk build --release \
+            --target aarch64-linux-android
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
@@ -57,3 +75,4 @@ jobs:
           name: Trivoga-BPLA-STAN
           path: target/**/*.apk
           if-no-files-found: error
+          retention-days: 14
