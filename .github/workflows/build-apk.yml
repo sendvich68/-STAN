@@ -3,7 +3,9 @@ name: Build Android APK
 on:
   workflow_dispatch:
   push:
-    branches: [main, master]
+    branches:
+      - main
+      - master
 
 permissions:
   contents: read
@@ -16,7 +18,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install Rust
+      - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: aarch64-linux-android
@@ -29,6 +31,12 @@ jobs:
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          packages: |
+            platform-tools
+            platforms;android-35
+            build-tools;35.0.0
+            cmdline-tools;latest
 
       - name: Setup Android NDK
         uses: nttld/setup-ndk@v1
@@ -47,3 +55,4 @@ jobs:
         with:
           name: Trivoga-BPLA-STAN
           path: target/**/release/apk/*.apk
+          if-no-files-found: error
