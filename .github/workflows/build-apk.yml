@@ -14,37 +14,24 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    env:
+      ANDROID_HOME: /usr/local/lib/android/sdk
+      ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install Rust
+      - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: aarch64-linux-android
 
-      - name: Install Java
+      - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: "17"
-
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Accept SDK terms
-        shell: bash
-        run: |
-          set +o pipefail
-          yes | sdkmanager --licenses
-          set -o pipefail
-
-      - name: Install SDK packages
-        run: |
-          sdkmanager \
-            "platform-tools" \
-            "platforms;android-35" \
-            "build-tools;35.0.0"
 
       - name: Setup NDK
         uses: nttld/setup-ndk@v1
@@ -52,21 +39,14 @@ jobs:
           ndk-version: r27c
           add-to-path: true
 
-      - name: Prepare map and font
+      - name: Install dependencies
+        run: cargo install cargo-apk --locked
+
+      - name: Prepare assets
         run: |
           mkdir -p assets
-          curl -fL \
-            https://raw.githubusercontent.com/wmgeolab/geoBoundaries/main/releaseData/gbOpen/UKR/ADM1/geoBoundaries-UKR-ADM1.geojson \
+          curl -fL "https://raw.githubusercontent.com/wmgeolab/geoBoundaries/main/releaseData/gbOpen/UKR/ADM1/geoBoundaries-UKR-ADM1.geojson" \
             -o assets/regions.geojson
-
-          sudo apt-get update
-          sudo apt-get install -y fonts-dejavu-core
-
-          cp /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf \
-            assets/DejaVuSans.ttf
-
-      - name: Install cargo-apk
-        run: cargo install cargo-apk --locked
 
       - name: Build APK
         run: cargo apk build --release --target aarch64-linux-android
@@ -77,4 +57,3 @@ jobs:
           name: Trivoga-BPLA-STAN
           path: target/**/*.apk
           if-no-files-found: error
-          retention-days: 14
